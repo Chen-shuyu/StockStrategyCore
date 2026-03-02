@@ -3,7 +3,9 @@ package com.shuyu;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
+import com.shuyu.collector.TwseStockDataCollector;
 import com.shuyu.model.StockKLine;
 
 /**
@@ -33,7 +35,9 @@ public class App {
         System.out.println();
         System.out.println("═".repeat(50));
         // ⭐ 新增：測試 StockKLine Record
-        testStockKLineRecord();
+        // testStockKLineRecord();
+
+        testRealCrawler();
     }
 
     private static void printBanner() {
@@ -97,5 +101,43 @@ public class App {
         System.out.println("StockKLine Record 測試成功！");
         System.out.println("準備開始機械化選股作業...");
         System.out.println();
+    }
+
+    private static void testRealCrawler() {
+        System.out.println("═".repeat(50));
+        System.out.println("🕷️ 測試證交所爬蟲");
+        System.out.println("═".repeat(50));
+
+        var collector = new TwseStockDataCollector();
+
+        // 測試抓取台積電最近 30 天資料
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(40);
+
+        System.out.println("抓取區間: " + startDate + " ~ " + endDate);
+        System.out.println();
+
+        long startTime = System.currentTimeMillis();
+
+        List<StockKLine> data = collector.fetchHistoricalData("2330", startDate, endDate);
+
+        long endTime = System.currentTimeMillis();
+
+        System.out.println();
+        System.out.println("抓取完成！");
+        System.out.println("耗時: " + (endTime - startTime) + " ms");
+        System.out.println("資料筆數: " + data.size());
+
+        // 顯示前 5 筆資料
+        if (!data.isEmpty()) {
+            System.out.println();
+            System.out.println("前 5 筆資料預覽：");
+            data.stream()
+                    .limit(5)
+                    .forEach(k -> System.out.printf(
+                            "%s | 開:%7.2f 高:%7.2f 低:%7.2f 收:%7.2f | %s%n",
+                            k.date(), k.open(), k.high(), k.low(), k.close(),
+                            k.isRedCandle() ? "紅" : "綠"));
+        }
     }
 }
